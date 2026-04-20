@@ -48,6 +48,7 @@ ipcMain.handle('list-devices', () => {
 // ── Start capture loop ──
 ipcMain.on('start-capture', (_, deviceName) => {
   if (isCapturing) return;
+  console.log('[MeetingAI] Start capture requested for device:', deviceName);
   isCapturing = true;
   chunkIndex = 0;
   captureChunk(deviceName);
@@ -100,17 +101,30 @@ function captureChunk(deviceName) {
   if (!isCapturing) return;
   const outputFile = path.join(TMP_DIR, `ma_chunk_${chunkIndex++}.wav`);
 
+  console.log('[MeetingAI] Spawning ffmpeg for device:', deviceName);
   ffmpegProcess = spawn('ffmpeg', [
     '-f', 'dshow',
-    '-i', `audio=${deviceName}`,
+    '-i', `audio=\"${deviceName}\"`,
     '-t', String(CHUNK_DURATION),
     '-ar', '16000',
     '-ac', '1',
     '-y', outputFile,
   ], { shell: true });
 
+  ffmpegProcess.stdout.on('data', (data) => {
+    console.log('[ffmpeg stdout]', data.toString());
+  });
+  ffmpegProcess.stderr.on('data', (data) => {
+    console.log('[ffmpeg stderr]', data.toString());
+  });
+
+  ffmpegProcess.on('error', (err) => {
+    console.error('[MeetingAI] ffmpeg process error:', err);
+  });
+
   ffmpegProcess.on('close', (code) => {
     ffmpegProcess = null;
+    console.log('[MeetingAI] ffmpeg process exited with code:', code);
     if (code === 0 && fs.existsSync(outputFile)) {
       transcribeChunk(outputFile, deviceName);
     } else {
