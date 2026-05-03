@@ -12,7 +12,7 @@
   },
   "license": "ISC",
   "author": "Raju Konga",
-  "main": "loopback/main.js",
+  "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",

@@ -34,10 +34,12 @@ function createWindow() {
   win.webContents.openDevTools();
 }
 
-// ── List audio devices (run once to find loopback device name) ──
+// ── List audio devices (dshow or wasapi) ──
+const USE_WASAPI = process.env.USE_WASAPI === '1' || true; // set env USE_WASAPI=1 to use wasapi
 ipcMain.handle('list-devices', () => {
   return new Promise((resolve) => {
-    const p = spawn('ffmpeg', ['-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'], { shell: true });
+    const inputFmt = USE_WASAPI ? 'wasapi' : 'dshow';
+    const p = spawn('ffmpeg', ['-list_devices', 'true', '-f', inputFmt, '-i', 'dummy'], { shell: true });
     let out = '';
     p.stderr.on('data', (d) => (out += d.toString()));
     p.stdout.on('data', (d) => (out += d.toString()));
@@ -101,10 +103,21 @@ function captureChunk(deviceName) {
   if (!isCapturing) return;
   const outputFile = path.join(TMP_DIR, `ma_chunk_${chunkIndex++}.wav`);
 
-  console.log('[MeetingAI] Spawning ffmpeg for device:', deviceName);
+  const inputFmt = USE_WASAPI ? 'wasapi' : 'dshow';
+  let inputArg;
+  if (USE_WASAPI) {
+    // WASAPI: deviceName as-is, e.g. "default" or device string from list
+    inputArg = deviceName;
+  } else {
+    // DSHOW: must be audio= and quoted
+    inputArg = `audio=\"${deviceName}\"`;
+  }
+
+  console.log(`[MeetingAI] Spawning ffmpeg for device: ${deviceName} (format: ${inputFmt})`);
   ffmpegProcess = spawn('ffmpeg', [
-    '-f', 'dshow',
-    '-i', `audio=\"${deviceName}\"`,
+    '-f', inputFmt,
+    '-audio_buffer_size', '50',
+    '-i', inputArg,
     '-t', String(CHUNK_DURATION),
     '-ar', '16000',
     '-ac', '1',

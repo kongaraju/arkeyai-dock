@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require("electron/main");
+const { app, ipcMain, BrowserWindow } = require("electron/main");
 const path = require("node:path");
 
 const createWindow = () => {
@@ -8,21 +8,31 @@ const createWindow = () => {
     transparent: true,
     frame: true,
     resizable: true,
-    // titleBarStyle: "hidden",
-    // titleBarOverlay: {
-    //   color: "rgba(47, 50, 65, 0)",
-    //   symbolColor: "#74b1be",
-    //   height: 40,
-    // },
+    focusable: false,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "rgba(47, 50, 65, 0)",
+      symbolColor: "#74b1be",
+      height: 40,
+    },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
       webviewTag: true,
     },
   });
+  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   win.setContentProtection(true);
+  win.setAlwaysOnTop(true, 'screen-saver');
   win.loadFile("index.html");
+  win.webContents.openDevTools();
 };
+
+
+ipcMain.on('open-new-window', () => {
+  let win = new BrowserWindow({ width: 600, height: 400 });
+  win.loadFile('Copilot.html');
+});
 
 app.whenReady().then(() => {
   createWindow();
