@@ -14,7 +14,7 @@ const TMP_DIR = os.tmpdir();
 // ── Update these paths after building whisper.cpp ──
 const WHISPER_BIN   = process.env.WHISPER_BIN   || 'C:\\Users\\inuko\\OneDrive\\Documents\\GitHub\\kongaraju\\whisper.cpp\\build\\bin\\Release\\whisper-cli.exe';
 const WHISPER_MODEL = process.env.WHISPER_MODEL || 'C:\\Users\\inuko\\OneDrive\\Documents\\GitHub\\kongaraju\\whisper.cpp\\models\\ggml-small.en.bin';
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || 'REMOVED_SECRET';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
 function createWindow() {
   win = new BrowserWindow({
